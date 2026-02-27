@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Compra Offline</title>
+    <link rel="manifest" href="data:application/json,{\"name\":\"Lista de Compra\",\"short_name\":\"Lista\",\"start_url\":\"/\",\"display\":\"standalone\",\"background_color\":\"#ffffff\",\"theme_color\":\"#ff6b35\"}">
+    <meta name="theme-color" content="#ff6b35">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 500px;
+            padding: 24px;
+            min-height: 500px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        h1 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .status {
+            font-size: 12px;
+            color: #666;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .status.online::before {
+            content: "●";
+            color: #4caf50;
+            font-size: 16px;
+        }
+
+        .status.offline::before {
+            content: "●";
+            color: #ff9800;
+            font-size: 16px;
+        }
+
+        .input-section {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            padding: 12px 24px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+
+        button:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(102, 126, 234, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .button-secondary {
+            background: #f5f5f5;
+            color: #333;
+            font-size: 14px;
+            padding: 8px 12px;
+        }
+
+        .button-secondary:hover {
+            background: #e0e0e0;
+            box-shadow: none;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+            background: #f8f9fa;
+            padding: 16px;
+            border-radius: 8px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 24px;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #999;
+            margin-top: 4px;
+        }
+
+        .lista-container {
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 16px;
+        }
+
+        .lista-vacia {
+            text-align: center;
+            color: #999;
+            padding: 40px 20px;
+            font-size: 14px;
+        }
+
+        .lista-vacia svg {
+            width: 60px;
+            height: 60px;
+            margin-bottom: 16px;
+            opacity: 0.3;
+        }
+
+        .item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            transition: all 0.2s;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .item.comprado {
+            background: #e8f5e9;
+            opacity: 0.7;
+        }
+
+        .item.comprado .item-texto {
+            text-decoration: line-through;
+            color: #999;
+        }
+
+        input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: #667eea;
+        }
+
+        .item-texto {
+            flex: 1;
+            font-size: 16px;
+            color: #333;
+            word-break: break-word;
+        }
+
+        .item-delete {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+
+        .item-delete:hover {
+            background: #ee5a5a;
+            transform: scale(1.05);
+        }
+
+        .footer-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .footer-actions button {
+            flex: 1;
+            min-width: 100px;
+            font-size: 14px;
+            padding: 10px;
+        }
+
+        .success-message {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #4caf50;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            animation: slideInUp 0.3s ease-out, slideOutUp 0.3s ease-out 2.7s;
+            z-index: 1000;
+        }
+
+        @keyframes slideInUp {
+            from {
+                transform: translateY(100px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOutUp {
+            from {
+                transform: translateY(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateY(100px);
+                opacity: 0;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                border-radius: 12px;
+                padding: 16px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            .input-section {
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
+            }
+
+            .footer-actions {
+                flex-direction: column;
+            }
+
+            .footer-actions button {
+                width: 100%;
+            }
+        }
+
+        /* Scrollbar personalizado */
+        .lista-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .lista-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        .lista-container::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 10px;
+        }
+
+        .lista-container::-webkit-scrollbar-thumb:hover {
+            background: #5568d3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🛒 Lista de Compra</h1>
+            <div class="status" id="status">
+                <span id="statusText">Conectado</span>
+            </div>
+        </header>
+
+        <div class="input-section">
+            <input type="text" id="inputProducto" placeholder="Ej: Leche, pan, tomates...">
+            <button id="btnAnadir">➕ Añadir</button>
+        </div>
+
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-number" id="totalItems">0</div>
+                <div class="stat-label">Total items</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="compradosItems">0</div>
+                <div class="stat-label">Comprados</div>
+            </div>
+        </div>
+
+        <div class="lista-container" id="lista">
+            <div class="lista-vacia">
+                📋 Tu lista está vacía<br>
+                <span style="font-size: 12px; margin-top: 8px; display: block;">Añade items para empezar</span>
+            </div>
+        </div>
+
+        <div class="footer-actions">
+            <button class="button-secondary" id="btnLimpiar">🗑️ Borrar comprados</button>
+            <button class="button-secondary" id="btnBorrarTodo">❌ Vaciar lista</button>
+            <button id="btnDescargar">💾 Descargar</button>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // CONFIGURACIÓN Y VARIABLES GLOBALES
+        // ============================================
+        const STORAGE_KEY = 'listaCompra_v1';
+        const inputProducto = document.getElementById('inputProducto');
+        const btnAnadir = document.getElementById('btnAnadir');
+        const listaDiv = document.getElementById('lista');
+        const btnLimpiar = document.getElementById('btnLimpiar');
+        const btnBorrarTodo = document.getElementById('btnBorrarTodo');
+        const btnDescargar = document.getElementById('btnDescargar');
+        const statusDiv = document.getElementById('status');
+        const statusText = document.getElementById('statusText');
+        const totalItemsSpan = document.getElementById('totalItems');
+        const compradosItemsSpan = document.getElementById('compradosItems');
+
+        let lista = [];
+
+        // ============================================
+        // SERVICE WORKER PARA OFFLINE
+        // ============================================
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('data:application/javascript,' + encodeURIComponent(`
+                    const CACHE_NAME = 'lista-compra-cache-v1';
+                    const FILES_TO_CACHE = ['/', '/index.html'];
+
+                    self.addEventListener('install', (event) => {
+                        event.waitUntil(
+                            caches.open(CACHE_NAME).then(cache => cache.addAll(FILES_TO_CACHE).catch(() => {}))
+                        );
+                        self.skipWaiting();
+                    });
+
+                    self.addEventListener('activate', (event) => {
+                        event.waitUntil(
+                            caches.keys().then(names =>
+                                Promise.all(
+                                    names.map(name => {
+                                        if (name !== CACHE_NAME) return caches.delete(name);
+                                    })
+                                )
+                            )
+                        );
+                        self.clients.claim();
+                    });
+
+                    self.addEventListener('fetch', (event) => {
+                        event.respondWith(
+                            caches.match(event.request).then(response => {
+                                return response || fetch(event.request).catch(() => new Response('Offline'));
+                            })
+                        );
+                    });
+                `)).catch(() => {});
+            });
+        }
+
+        // ============================================
+        // FUNCIONES DE ALMACENAMIENTO (OFFLINE)
+        // ============================================
+        function guardarLista() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(lista));
+                mostrarMensaje('💾 Guardado');
+            } catch (e) {
+                console.error('Error guardando:', e);
+            }
+        }
+
+        function cargarLista() {
+            try {
+                const guardado = localStorage.getItem(STORAGE_KEY);
+                if (guardado) {
+                    lista = JSON.parse(guardado);
+                } else {
+                    lista = [];
+                }
+            } catch (e) {
+                console.error('Error cargando:', e);
+                lista = [];
+            }
+            renderizar();
+        }
+
+        // ============================================
+        // FUNCIONES DE UI
+        // ============================================
+        function renderizar() {
+            if (lista.length === 0) {
+                listaDiv.innerHTML = `
+                    <div class="lista-vacia">
+                        📋 Tu lista está vacía<br>
+                        <span style="font-size: 12px; margin-top: 8px; display: block;">Añade items para empezar</span>
+                    </div>
+                `;
+            } else {
+                listaDiv.innerHTML = lista.map((item, index) => `
+                    <div class="item ${item.comprado ? 'comprado' : ''}">
+                        <input 
+                            type="checkbox" 
+                            ${item.comprado ? 'checked' : ''} 
+                            onchange="toggleItem(${index})"
+                        >
+                        <span class="item-texto">${escapar(item.nombre)}</span>
+                        <button class="item-delete" onclick="eliminarItem(${index})">🗑️</button>
+                    </div>
+                `).join('');
+            }
+            actualizarStats();
+        }
+
+        function actualizarStats() {
+            const total = lista.length;
+            const comprados = lista.filter(item => item.comprado).length;
+            totalItemsSpan.textContent = total;
+            compradosItemsSpan.textContent = comprados;
+        }
+
+        function escapar(texto) {
+            const div = document.createElement('div');
+            div.textContent = texto;
+            return div.innerHTML;
+        }
+
+        function mostrarMensaje(mensaje) {
+            const msg = document.createElement('div');
+            msg.className = 'success-message';
+            msg.textContent = mensaje;
+            document.body.appendChild(msg);
+            setTimeout(() => msg.remove(), 3000);
+        }
+
+        // ============================================
+        // FUNCIONES DE LISTA
+        // ============================================
+        function anadirProducto() {
+            const nombre = inputProducto.value.trim();
+            if (nombre === '') {
+                inputProducto.focus();
+                return;
+            }
+
+            lista.push({
+                id: Date.now(),
+                nombre: nombre,
+                comprado: false
+            });
+
+            guardarLista();
+            renderizar();
+            inputProducto.value = '';
+            inputProducto.focus();
+            mostrarMensaje('✅ Producto añadido');
+        }
+
+        function toggleItem(index) {
+            lista[index].comprado = !lista[index].comprado;
+            guardarLista();
+            renderizar();
+        }
+
+        function eliminarItem(index) {
+            lista.splice(index, 1);
+            guardarLista();
+            renderizar();
+            mostrarMensaje('🗑️ Eliminado');
+        }
+
+        function limpiarComprados() {
+            const antes = lista.length;
+            lista = lista.filter(item => !item.comprado);
+            if (antes > lista.length) {
+                guardarLista();
+                renderizar();
+                mostrarMensaje(`🗑️ ${antes - lista.length} eliminado(s)`);
+            }
+        }
+
+        function borrarTodo() {
+            if (lista.length === 0) return;
+            if (confirm('¿Borrar toda la lista? Esta acción no se puede deshacer.')) {
+                lista = [];
+                guardarLista();
+                renderizar();
+                mostrarMensaje('❌ Lista vaciada');
+            }
+        }
+
+        function descargarLista() {
+            if (lista.length === 0) {
+                mostrarMensaje('📋 Lista vacía');
+                return;
+            }
+
+            const contenido = lista
+                .map((item, i) => `${i + 1}. ${item.nombre} ${item.comprado ? '✅' : ''}`)
+                .join('\n');
+
+            const texto = `LISTA DE COMPRA\n${new Date().toLocaleDateString('es-ES')}\n\n${contenido}\n\nTotal: ${lista.length} items\nComprados: ${lista.filter(i => i.comprado).length}`;
+
+            const blob = new Blob([texto], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `lista-compra-${new Date().toISOString().split('T')[0]}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+            mostrarMensaje('💾 Descargado');
+        }
+
+        // ============================================
+        // EVENT LISTENERS
+        // ============================================
+        btnAnadir.addEventListener('click', anadirProducto);
+        inputProducto.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') anadirProducto();
+        });
+        btnLimpiar.addEventListener('click', limpiarComprados);
+        btnBorrarTodo.addEventListener('click', borrarTodo);
+        btnDescargar.addEventListener('click', descargarLista);
+
+        // Estado de conexión
+        function actualizarEstadoConexion() {
+            if (navigator.onLine) {
+                statusDiv.className = 'status online';
+                statusText.textContent = '✓ Conectado';
+            } else {
+                statusDiv.className = 'status offline';
+                statusText.textContent = '⚠ Offline (datos guardados)';
+            }
+        }
+
+        window.addEventListener('online', actualizarEstadoConexion);
+        window.addEventListener('offline', actualizarEstadoConexion);
+
+        // ============================================
+        // INICIALIZACIÓN
+        // ============================================
+        cargarLista();
+        actualizarEstadoConexion();
+    </script>
+</body>
+</html>
