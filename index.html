@@ -21,8 +21,8 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            writing-mode: horizontal-tb;
-            text-orientation: mixed;
+			writing-mode: horizontal-tb;
+			text-orientation: mixed;
         }
 
         .container {
@@ -458,28 +458,25 @@
         // FUNCIONES DE UI
         // ============================================
         function renderizar() {
-            if (lista.length === 0) {
-                listaDiv.innerHTML = `
-                    <div class="lista-vacia">
-                        📋 Tu lista está vacía<br>
-                        <span style="font-size: 12px; margin-top: 8px; display: block;">Añade items para empezar</span>
-                    </div>
-                `;
-            } else {
-                listaDiv.innerHTML = lista.map((item, index) => `
-                    <div class="item ${item.comprado ? 'comprado' : ''}">
-                        <input 
-                            type="checkbox" 
-                            ${item.comprado ? 'checked' : ''} 
-                            onchange="toggleItem(${index})"
-                        >
-                        <span class="item-texto">${escapar(item.nombre)}</span>
-                        <button class="item-delete" onclick="eliminarItem(${index})">🗑️</button>
-                    </div>
-                `).join('');
-            }
-            actualizarStats();
-        }
+			if (lista.length === 0) {
+			listaDiv.innerHTML = `
+			<div class="lista-vacia">
+			Tu lista está vacía<br>
+			<span style="font-size: 12px; margin-top: 8px; display: block;">Añade items para empezar</span>
+			</div>
+			`;
+			} else {
+			listaDiv.innerHTML = lista.map((item, index) => `
+			<div class="item${item.comprado ? ' comprado' : ''}">
+			<input type="checkbox"${item.comprado ? ' checked' : ''} onchange="toggleItem(${index})">
+			<span class="item-texto">${escapartexto(item.nombre)}</span>
+			<button class="item-delete" onclick="eliminarItem(${index})">✕</button>
+			</div>
+			`).join('');
+			}
+			actualizarStats();
+			}
+
 
         function actualizarStats() {
             const total = lista.length;
@@ -488,11 +485,12 @@
             compradosItemsSpan.textContent = comprados;
         }
 
-        function escapar(texto) {
-            const div = document.createElement('div');
-            div.textContent = texto;
-            return div.innerHTML;
-        }
+        function escapartexto(texto) {
+			const div = document.createElement('div');
+			div.textContent = texto;
+			return div.innerHTML;
+		}
+
 
         function mostrarMensaje(mensaje) {
             const msg = document.createElement('div');
