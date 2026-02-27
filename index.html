@@ -346,12 +346,21 @@
 			min-height: 20px !important;
 		}	
 
-/* Extra para móviles */
-@media (orientation: portrait) {
-  .item-texto {
-    flex-direction: row !important;
-  }
-}
+		/* Extra para móviles */
+		@media (orientation: portrait) {
+		.item-texto {
+		flex-direction: row !important;
+		}
+	
+		/* ANTI-VERTICAL ANDROID - DEFINITIVO */
+		.item-texto,
+		.item span {
+			writing-mode: horizontal-tb !important;
+			text-orientation: mixed !important;
+			direction: ltr !important;
+			line-height: 1.4 !important;
+			transform: none
+	}
 
     </style>
 </head>
