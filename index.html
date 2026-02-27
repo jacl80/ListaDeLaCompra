@@ -328,6 +328,31 @@
         .lista-container::-webkit-scrollbar-thumb:hover {
             background: #5568d3;
         }
+		/* CORRECCIÓN TEXTO VERTICAL - FUERZA HORIZONTAL */
+		.item-texto, 
+		.item span, 
+		[class*="item"] span {
+			writing-mode: horizontal-tb !important;
+			text-orientation: mixed !important;
+			transform: none !important;
+			rotate: 0deg !important;
+			display: flex !important;
+			align-items: center !important;
+			flex-direction: row !important;
+			line-height: 1.4 !important;
+			white-space: normal !important;
+			font-size: 16px !important;
+			height: auto !important;
+			min-height: 20px !important;
+		}	
+
+/* Extra para móviles */
+@media (orientation: portrait) {
+  .item-texto {
+    flex-direction: row !important;
+  }
+}
+
     </style>
 </head>
 <body>
